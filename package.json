@@ -15,8 +15,7 @@
   "scripts": {
     "dev": "vite --open /demo/",
     "build": "vite build",
-    "test": "vitest run",
-    "prepare": "vite build"
+    "test": "vitest run"
   },
   "dependencies": {
     "chart.js": "^4.4.0",

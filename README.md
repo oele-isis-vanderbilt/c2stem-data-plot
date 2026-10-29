@@ -95,3 +95,16 @@ npm run dev     # demo at http://localhost:5173/demo/ with an in-memory server
 npm test
 npm run build   # dist/data-plot.js; lit and chart.js are left for the host to install
 ```
+
+## Release
+
+`dist/` is committed, so hosts install the library without building it. This matters for servers that can only run Node 16, where Vite won't run. Before each tag:
+
+```bash
+npm test
+npm run build
+git add dist && git commit -m "..."
+git tag v0.1.x && git push && git push origin v0.1.x
+```
+
+Hosts then install it with `npm install github:oele-isis-vanderbilt/c2stem-data-plot#v0.1.x`.
