@@ -3,6 +3,8 @@
 A floating window with a fixed-column table and a plot of whatever students type into it. It's a web component (`<data-plot-tool>`), so it works in Vue, React or plain HTML.
 
 - The window can be dragged by its title bar, collapsed to the bar, closed and opened again.
+- The window grows with the table up to the bottom of the screen, so the rows don't scroll until the screen is full.
+- A **Connect points** checkbox joins each series' points in order of x.
 - Each task sets its own columns and its x/y plot columns.
 - Saving and logging go through an **adapter** that the host app supplies. The component never calls a server itself.
 
@@ -40,7 +42,7 @@ tool.open();
 | `plot.x` | Key of the x column |
 | `plot.y` | Keys of the y columns, all plotted on one shared y axis |
 | `plot.yLabel` | y axis title. Defaults to the column label when there is one y column, otherwise none |
-| `plot.line` | `true` joins the points with lines, sorted by x |
+| `plot.line` | Whether **Connect points** starts ticked. Students can change it; their choice is saved with the table |
 
 Cells hold exactly what was typed. Cells that aren't numbers are marked and left out of the plot.
 
@@ -53,8 +55,8 @@ Cells hold exactly what was typed. Cells that aren't numbers are marked and left
 | `readonly` | No editing, saving or logging |
 | `open()`, `close()`, `collapse()`, `expand()`, `toggle()`, `view` | Window state; `view` is `closed`, `open` or `collapsed` |
 | `appendRows(objects, { source })` | Adds rows such as `{ mass: 2, stopPos: 6 }` (for linking to a simulation). Blank rows already there are replaced |
-| `getRows()`, `flush()` | Read the rows; send any waiting save or log events now |
-| events | `datachange`, `viewchange`, `savestate`, `loaded`, `loaderror` |
+| `getRows()`, `getSettings()`, `flush()` | Read the rows or settings; send any waiting save or log events now |
+| events | `datachange`, `settingschange`, `viewchange`, `savestate`, `loaded`, `loaderror` |
 
 **Stacking:** the window uses `position: fixed` with `z-index: var(--dpt-z-index, 1000)`. A host overlay with a higher z-index covers and freezes it like the rest of the page.
 
@@ -63,7 +65,7 @@ Cells hold exactly what was typed. Cells that aren't numbers are marked and left
 ```js
 {
   load(taskId)                      // → saved doc or null
-  save(taskId, doc, { keepalive })  // doc = { columns, rows: [{ id, values }] }
+  save(taskId, doc, { keepalive })  // doc = { columns, rows: [{ id, values }], settings: { connectPoints } }
   log(taskId, events, { keepalive }) // events = [{ type, time, data }]
 }
 ```
@@ -75,7 +77,7 @@ Cells hold exactly what was typed. Cells that aren't numbers are marked and left
 
 **Logged events:**
 - `opened`, `closed`, `collapsed`, `expanded`, `moved`
-- `row_added`, `row_deleted`, `rows_appended`
+- `row_added`, `row_deleted`, `rows_appended`, `connect_points_changed` (`value`)
 - `cell_edited` (`rowId`, `key`, `old`, `value`, `valid`)
 
 `createHttpAdapter({ baseURL, getToken, prefix = "/app/api" })` calls the agent server:

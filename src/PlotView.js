@@ -114,14 +114,20 @@ export class PlotView extends LitElement {
   static get styles() {
     return css`
       :host {
-        display: block;
-        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        min-height: 240px;
         min-width: 0;
       }
+      /* The canvas is taken out of the layout so the chart follows its box and never pushes it taller */
       .wrap {
         position: relative;
-        height: 100%;
-        min-height: 200px;
+        flex: 1;
+        min-height: 0;
+      }
+      canvas {
+        position: absolute;
+        inset: 0;
       }
       .empty {
         position: absolute;

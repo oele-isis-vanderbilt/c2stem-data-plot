@@ -75,11 +75,29 @@ export function plotSeries(config, rows) {
   });
 }
 
-/** The saved form. Columns go with the rows so old saves can still be matched after a config change. */
-export function toDoc(config, rows) {
+/**
+ * The saved form. Columns go with the rows so old saves can still be matched after a config change;
+ * settings are the student's display choices (connectPoints).
+ */
+export function toDoc(config, rows, settings = defaultSettings(config)) {
   return {
     columns: config.columns.map((c) => ({ key: c.key, label: c.label, unit: c.unit || "" })),
     rows: rows.map((r) => ({ id: r.id, values: { ...r.values } })),
+    settings: { connectPoints: Boolean(settings.connectPoints) },
+  };
+}
+
+export function defaultSettings(config) {
+  return { connectPoints: Boolean(config.plot.line) };
+}
+
+/** Settings from a saved doc; a doc saved before settings existed gets the config's defaults. */
+export function settingsFromDoc(config, doc) {
+  const saved = doc && doc.settings;
+  const defaults = defaultSettings(config);
+  return {
+    connectPoints:
+      saved && typeof saved.connectPoints === "boolean" ? saved.connectPoints : defaults.connectPoints,
   };
 }
 

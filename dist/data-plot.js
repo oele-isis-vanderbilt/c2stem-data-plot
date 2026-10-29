@@ -1,129 +1,139 @@
-import { LitElement as x, nothing as f, html as c, css as $ } from "lit";
-import { styleMap as N } from "lit/directives/style-map.js";
-import { repeat as q } from "lit/directives/repeat.js";
-import { live as A } from "lit/directives/live.js";
-import { Chart as L, ScatterController as D, LineElement as O, PointElement as B, LinearScale as F, Tooltip as V, Legend as H } from "chart.js";
-let C = 0;
-function P() {
-  return C += 1, `r${Date.now().toString(36)}${C.toString(36)}`;
+import { LitElement as $, nothing as f, html as c, css as E } from "lit";
+import { styleMap as q } from "lit/directives/style-map.js";
+import { repeat as A } from "lit/directives/repeat.js";
+import { live as B } from "lit/directives/live.js";
+import { Chart as L, ScatterController as F, LineElement as H, PointElement as O, LinearScale as V, Tooltip as U, Legend as K } from "chart.js";
+let P = 0;
+function T() {
+  return P += 1, `r${Date.now().toString(36)}${P.toString(36)}`;
 }
-function b(r) {
+function w(o) {
   const t = {};
-  return r.columns.forEach((e) => t[e.key] = ""), { id: P(), values: t };
+  return o.columns.forEach((e) => t[e.key] = ""), { id: T(), values: t };
 }
-function y(r) {
-  if (r == null) return null;
-  const t = String(r).trim();
+function k(o) {
+  if (o == null) return null;
+  const t = String(o).trim();
   if (t === "") return null;
   const e = Number(t);
   return Number.isFinite(e) ? e : NaN;
 }
-function T(r) {
-  return Number.isNaN(y(r)) ? "Enter a number" : null;
+function z(o) {
+  return Number.isNaN(k(o)) ? "Enter a number" : null;
 }
-function U(r) {
-  return Object.values(r.values).every((t) => String(t).trim() === "");
+function G(o) {
+  return Object.values(o.values).every((t) => String(t).trim() === "");
 }
-function K(r) {
-  if (!r || !Array.isArray(r.columns) || r.columns.length === 0)
+function Y(o) {
+  if (!o || !Array.isArray(o.columns) || o.columns.length === 0)
     throw new Error("config.columns must list at least one column");
   const t = /* @__PURE__ */ new Set();
-  r.columns.forEach((s) => {
+  o.columns.forEach((s) => {
     if (!s.key) throw new Error("Every column needs a key");
     if (t.has(s.key)) throw new Error(`Column key "${s.key}" is used twice`);
     t.add(s.key);
   });
-  const e = r.plot;
+  const e = o.plot;
   if (!e || !e.x || !Array.isArray(e.y) || e.y.length === 0)
     throw new Error("config.plot needs an x column and at least one y column");
   return [e.x, ...e.y].forEach((s) => {
     if (!t.has(s)) throw new Error(`Plot column "${s}" is not in config.columns`);
-  }), r;
+  }), o;
 }
-function z(r) {
-  return r.unit ? `${r.label} (${r.unit})` : r.label;
+function M(o) {
+  return o.unit ? `${o.label} (${o.unit})` : o.label;
 }
-function G(r, t) {
+function j(o, t) {
   const e = {};
-  return r.columns.forEach((s) => e[s.key] = s), r.plot.y.map((s) => {
-    const o = [];
+  return o.columns.forEach((s) => e[s.key] = s), o.plot.y.map((s) => {
+    const n = [];
     return t.forEach((i) => {
-      const n = y(i.values[r.plot.x]), l = y(i.values[s]);
-      Number.isFinite(n) && Number.isFinite(l) && o.push({ x: n, y: l });
-    }), o.sort((i, n) => i.x - n.x), { key: s, label: z(e[s]), points: o };
+      const r = k(i.values[o.plot.x]), l = k(i.values[s]);
+      Number.isFinite(r) && Number.isFinite(l) && n.push({ x: r, y: l });
+    }), n.sort((i, r) => i.x - r.x), { key: s, label: M(e[s]), points: n };
   });
 }
-function S(r, t) {
+function b(o, t, e = N(o)) {
   return {
-    columns: r.columns.map((e) => ({ key: e.key, label: e.label, unit: e.unit || "" })),
-    rows: t.map((e) => ({ id: e.id, values: { ...e.values } }))
+    columns: o.columns.map((s) => ({ key: s.key, label: s.label, unit: s.unit || "" })),
+    rows: t.map((s) => ({ id: s.id, values: { ...s.values } })),
+    settings: { connectPoints: !!e.connectPoints }
   };
 }
-function v(r, t) {
-  const s = (t && Array.isArray(t.rows) ? t.rows : []).map((o) => {
-    const i = {};
-    return r.columns.forEach((n) => {
-      const l = o.values ? o.values[n.key] : void 0;
-      i[n.key] = l == null ? "" : String(l);
-    }), { id: o.id || P(), values: i };
-  });
-  return s.length ? s : [b(r)];
+function N(o) {
+  return { connectPoints: !!o.plot.line };
 }
-function Y(r, t) {
+function y(o, t) {
+  const e = t && t.settings, s = N(o);
+  return {
+    connectPoints: e && typeof e.connectPoints == "boolean" ? e.connectPoints : s.connectPoints
+  };
+}
+function v(o, t) {
+  const s = (t && Array.isArray(t.rows) ? t.rows : []).map((n) => {
+    const i = {};
+    return o.columns.forEach((r) => {
+      const l = n.values ? n.values[r.key] : void 0;
+      i[r.key] = l == null ? "" : String(l);
+    }), { id: n.id || T(), values: i };
+  });
+  return s.length ? s : [w(o)];
+}
+function X(o, t) {
   return t.map((e) => {
-    const s = b(r);
-    return r.columns.forEach((o) => {
-      const i = e[o.key];
-      i != null && (s.values[o.key] = String(i));
+    const s = w(o);
+    return o.columns.forEach((n) => {
+      const i = e[n.key];
+      i != null && (s.values[n.key] = String(i));
     }), s;
   });
 }
-function j({ save: r, delay: t = 1e3, retryDelay: e = 5e3, onState: s = () => {
+function W({ save: o, delay: t = 1e3, retryDelay: e = 5e3, onState: s = () => {
 } }) {
-  let o = null, i = null, n = null;
+  let n = null, i = null, r = null;
   function l(u) {
-    o = u, s("unsaved"), clearTimeout(i), i = setTimeout(a, t);
+    n = u, s("unsaved"), clearTimeout(i), i = setTimeout(a, t);
   }
   async function a() {
-    for (clearTimeout(i), i = null; n; ) await n;
-    if (!o) return;
-    const u = o;
-    o = null, s("saving"), n = Promise.resolve().then(() => r(u, { keepalive: !1 })).then(
+    for (clearTimeout(i), i = null; r; ) await r;
+    if (!n) return;
+    const u = n;
+    n = null, s("saving"), r = Promise.resolve().then(() => o(u, { keepalive: !1 })).then(
       () => {
-        o || s("saved");
+        n || s("saved");
       },
       (m) => {
-        o || (o = u), s("error", m), clearTimeout(i), i = setTimeout(a, e);
+        n || (n = u), s("error", m), clearTimeout(i), i = setTimeout(a, e);
       }
     ).finally(() => {
-      n = null;
-    }), await n;
+      r = null;
+    }), await r;
   }
   function d() {
-    if (clearTimeout(i), i = null, !o) return;
-    const u = o;
-    o = null;
+    if (clearTimeout(i), i = null, !n) return;
+    const u = n;
+    n = null;
     try {
-      r(u, { keepalive: !0 });
+      o(u, { keepalive: !0 });
     } catch {
     }
   }
   function h() {
-    clearTimeout(i), i = null, o = null;
+    clearTimeout(i), i = null, n = null;
   }
-  return { schedule: l, flush: a, flushOnUnload: d, cancel: h, hasPending: () => o !== null };
+  return { schedule: l, flush: a, flushOnUnload: d, cancel: h, hasPending: () => n !== null };
 }
-function X({ send: r, interval: t = 5e3, maxBatch: e = 50, maxQueued: s = 500, now: o = Date.now }) {
-  let i = [], n = null, l = !1;
+function J({ send: o, interval: t = 5e3, maxBatch: e = 50, maxQueued: s = 500, now: n = Date.now }) {
+  let i = [], r = null, l = !1;
   function a(g, p = {}) {
-    i.push({ type: g, time: o(), data: p }), i.length > s && (i = i.slice(i.length - s)), i.length >= e && d();
+    i.push({ type: g, time: n(), data: p }), i.length > s && (i = i.slice(i.length - s)), i.length >= e && d();
   }
   async function d() {
     if (l || i.length === 0) return;
     const g = i;
     i = [], l = !0;
     try {
-      await r(g, { keepalive: !1 });
+      await o(g, { keepalive: !1 });
     } catch {
       i = g.concat(i).slice(-s);
     } finally {
@@ -135,31 +145,31 @@ function X({ send: r, interval: t = 5e3, maxBatch: e = 50, maxQueued: s = 500, n
     const g = i;
     i = [];
     try {
-      r(g, { keepalive: !0 });
+      o(g, { keepalive: !0 });
     } catch {
     }
   }
   function u() {
-    n || (n = setInterval(d, t));
+    r || (r = setInterval(d, t));
   }
   function m() {
-    clearInterval(n), n = null;
+    clearInterval(r), r = null;
   }
   return { push: a, flush: d, flushOnUnload: h, start: u, stop: m, size: () => i.length };
 }
-const W = 44;
-function J(r, t, e) {
-  const s = Math.max(0, e.width - t.width), o = Math.max(0, e.height - W);
+const Z = 44;
+function Q(o, t, e) {
+  const s = Math.max(0, e.width - t.width), n = Math.max(0, e.height - Z);
   return {
-    x: Math.round(Math.min(Math.max(0, r.x), s)),
-    y: Math.round(Math.min(Math.max(0, r.y), o))
+    x: Math.round(Math.min(Math.max(0, o.x), s)),
+    y: Math.round(Math.min(Math.max(0, o.y), n))
   };
 }
-class Z {
-  constructor(t, { getFrame: e, getPosition: s, onMove: o, onEnd: i }) {
-    this.getFrame = e, this.getPosition = s, this.onMove = o, this.onEnd = i, this.start = this.start.bind(this), this._onResize = () => {
-      const n = this.getPosition();
-      n && this.getFrame() && this.onMove(this.clamp(n));
+class tt {
+  constructor(t, { getFrame: e, getPosition: s, onMove: n, onEnd: i }) {
+    this.getFrame = e, this.getPosition = s, this.onMove = n, this.onEnd = i, this.start = this.start.bind(this), this._onResize = () => {
+      const r = this.getPosition();
+      r && this.getFrame() && this.onMove(this.clamp(r));
     }, t.addController(this);
   }
   hostConnected() {
@@ -170,28 +180,28 @@ class Z {
   }
   clamp(t) {
     const e = this.getFrame(), s = e ? e.getBoundingClientRect() : { width: 0 };
-    return J(t, s, { width: window.innerWidth, height: window.innerHeight });
+    return Q(t, s, { width: window.innerWidth, height: window.innerHeight });
   }
   /** pointerdown handler for the title bar. Presses on its buttons are left alone. */
   start(t) {
     if (t.button !== 0 || t.target.closest("button")) return;
     const e = this.getFrame();
     if (!e) return;
-    const s = e.getBoundingClientRect(), o = t.clientX - s.left, i = t.clientY - s.top, n = t.currentTarget;
-    n.setPointerCapture(t.pointerId), t.preventDefault();
+    const s = e.getBoundingClientRect(), n = t.clientX - s.left, i = t.clientY - s.top, r = t.currentTarget;
+    r.setPointerCapture(t.pointerId), t.preventDefault();
     let l = null;
     const a = (h) => {
-      l = this.clamp({ x: h.clientX - o, y: h.clientY - i }), this.onMove(l);
+      l = this.clamp({ x: h.clientX - n, y: h.clientY - i }), this.onMove(l);
     }, d = () => {
-      n.removeEventListener("pointermove", a), n.removeEventListener("pointerup", d), n.removeEventListener("pointercancel", d), l && this.onEnd(l);
+      r.removeEventListener("pointermove", a), r.removeEventListener("pointerup", d), r.removeEventListener("pointercancel", d), l && this.onEnd(l);
     };
-    n.addEventListener("pointermove", a), n.addEventListener("pointerup", d), n.addEventListener("pointercancel", d);
+    r.addEventListener("pointermove", a), r.addEventListener("pointerup", d), r.addEventListener("pointercancel", d);
   }
 }
-function k(r, t) {
-  customElements.get(r) || customElements.define(r, t);
+function S(o, t) {
+  customElements.get(o) || customElements.define(o, t);
 }
-class Q extends x {
+class et extends $ {
   static get properties() {
     return {
       columns: { attribute: !1 },
@@ -224,7 +234,7 @@ class Q extends x {
   _onKeydown(t) {
     if (t.key !== "Enter") return;
     t.preventDefault();
-    const { row: e, key: s } = t.target.dataset, i = this.rows.findIndex((n) => n.id === e) + (t.shiftKey ? -1 : 1);
+    const { row: e, key: s } = t.target.dataset, i = this.rows.findIndex((r) => r.id === e) + (t.shiftKey ? -1 : 1);
     i >= 0 && i < this.rows.length ? this.focusCell(this.rows[i].id, s) : i === this.rows.length && !this.readonly && (t.target.blur(), this._emit("row-add", { focusKey: s }));
   }
   render() {
@@ -236,21 +246,21 @@ class Q extends x {
             <tr>
               <th class="num" scope="col"><span class="sr">Row</span></th>
               ${t.map(
-      (o) => c`<th scope="col">${o.label}${o.unit ? c` <span class="unit">(${o.unit})</span>` : f}</th>`
+      (n) => c`<th scope="col">${n.label}${n.unit ? c`<span class="unit">(${n.unit})</span>` : f}</th>`
     )}
               ${s ? f : c`<th class="act" scope="col"><span class="sr">Delete</span></th>`}
             </tr>
           </thead>
           <tbody>
-            ${q(
+            ${A(
       e,
-      (o) => o.id,
-      (o, i) => c`
+      (n) => n.id,
+      (n, i) => c`
                 <tr>
                   <th class="num" scope="row">${i + 1}</th>
-                  ${t.map((n) => {
+                  ${t.map((r) => {
         var d;
-        const l = (d = o.values[n.key]) != null ? d : "", a = T(l);
+        const l = (d = n.values[r.key]) != null ? d : "", a = z(l);
         return c`<td>
                       <input
                         type="text"
@@ -258,11 +268,11 @@ class Q extends x {
                         autocomplete="off"
                         class=${a ? "invalid" : ""}
                         aria-invalid=${a ? "true" : "false"}
-                        aria-label="${n.label}, row ${i + 1}"
+                        aria-label="${r.label}, row ${i + 1}"
                         title=${a || ""}
-                        data-row=${o.id}
-                        data-key=${n.key}
-                        .value=${A(l)}
+                        data-row=${n.id}
+                        data-key=${r.key}
+                        .value=${B(l)}
                         ?readonly=${s}
                         @focus=${this._onFocus}
                         @input=${this._onInput}
@@ -276,7 +286,7 @@ class Q extends x {
                           class="del"
                           title="Delete row"
                           aria-label="Delete row ${i + 1}"
-                          @click=${() => this._emit("row-delete", { rowId: o.id })}
+                          @click=${() => this._emit("row-delete", { rowId: n.id })}
                         >
                           ×
                         </button>
@@ -291,7 +301,7 @@ class Q extends x {
     `;
   }
   static get styles() {
-    return $`
+    return E`
       :host {
         display: flex;
         flex-direction: column;
@@ -306,7 +316,7 @@ class Q extends x {
       }
       table {
         border-collapse: collapse;
-        width: 100%;
+        min-width: 100%;
         font-size: 14px;
       }
       thead th {
@@ -318,11 +328,15 @@ class Q extends x {
         font-weight: 600;
         padding: 6px 8px;
         border-bottom: 1px solid var(--dpt-border);
-        white-space: nowrap;
+        vertical-align: bottom;
+        line-height: 1.25;
       }
+      /* Units on their own line keep the columns narrow */
       .unit {
+        display: block;
         font-weight: 400;
         color: var(--dpt-muted);
+        white-space: nowrap;
       }
       td,
       tbody th {
@@ -340,7 +354,7 @@ class Q extends x {
       input {
         box-sizing: border-box;
         width: 100%;
-        min-width: 5em;
+        min-width: 4.5em;
         border: 1px solid transparent;
         background: transparent;
         padding: 6px 8px;
@@ -404,10 +418,10 @@ class Q extends x {
     `;
   }
 }
-k("dpt-table", Q);
-L.register(D, O, B, F, V, H);
-const w = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948"], R = ["circle", "triangle", "rect", "rectRot", "crossRot", "star", "rectRounded", "cross"], _ = "#55544f", I = "#ebeae6";
-class tt extends x {
+S("dpt-table", et);
+L.register(F, H, O, V, U, K);
+const _ = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948"], R = ["circle", "triangle", "rect", "rectRot", "crossRot", "star", "rectRounded", "cross"], x = "#55544f", I = "#ebeae6";
+class st extends $ {
   static get properties() {
     return {
       series: { attribute: !1 },
@@ -430,8 +444,8 @@ class tt extends x {
       label: t.label,
       data: t.points,
       showLine: this.line,
-      borderColor: w[e % w.length],
-      backgroundColor: w[e % w.length],
+      borderColor: _[e % _.length],
+      backgroundColor: _[e % _.length],
       pointStyle: R[e % R.length],
       pointRadius: 5,
       pointHoverRadius: 7,
@@ -442,8 +456,8 @@ class tt extends x {
   _options() {
     const t = (e) => ({
       type: "linear",
-      title: { display: !!e, text: e, color: _ },
-      ticks: { color: _ },
+      title: { display: !!e, text: e, color: x },
+      ticks: { color: x },
       grid: { color: I },
       border: { color: I }
     });
@@ -455,7 +469,7 @@ class tt extends x {
       plugins: {
         legend: {
           display: this.series.length > 1,
-          labels: { usePointStyle: !0, color: _ }
+          labels: { usePointStyle: !0, color: x }
         },
         tooltip: {
           callbacks: {
@@ -489,16 +503,22 @@ class tt extends x {
     `;
   }
   static get styles() {
-    return $`
+    return E`
       :host {
-        display: block;
-        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        min-height: 240px;
         min-width: 0;
       }
+      /* The canvas is taken out of the layout so the chart follows its box and never pushes it taller */
       .wrap {
         position: relative;
-        height: 100%;
-        min-height: 200px;
+        flex: 1;
+        min-height: 0;
+      }
+      canvas {
+        position: absolute;
+        inset: 0;
       }
       .empty {
         position: absolute;
@@ -516,23 +536,23 @@ class tt extends x {
     `;
   }
 }
-k("dpt-plot", tt);
-const M = "c2stem-data-plot:position";
-function et() {
+S("dpt-plot", st);
+const D = "c2stem-data-plot:position";
+function it() {
   try {
-    const r = JSON.parse(localStorage.getItem(M));
-    return r && Number.isFinite(r.x) && Number.isFinite(r.y) ? r : null;
+    const o = JSON.parse(localStorage.getItem(D));
+    return o && Number.isFinite(o.x) && Number.isFinite(o.y) ? o : null;
   } catch {
     return null;
   }
 }
-function st(r) {
+function nt(o) {
   try {
-    localStorage.setItem(M, JSON.stringify(r));
+    localStorage.setItem(D, JSON.stringify(o));
   } catch {
   }
 }
-class it extends x {
+class ot extends $ {
   static get properties() {
     return {
       config: { attribute: !1 },
@@ -541,6 +561,7 @@ class it extends x {
       data: { attribute: !1 },
       readonly: { type: Boolean, reflect: !0 },
       _rows: { state: !0 },
+      _settings: { state: !0 },
       _status: { state: !0 },
       _error: { state: !0 },
       _saveState: { state: !0 },
@@ -549,12 +570,12 @@ class it extends x {
     };
   }
   constructor() {
-    super(), this.readonly = !1, this._rows = [], this._status = "idle", this._error = "", this._saveState = "saved", this._saveError = null, this._view = "closed", this._pos = null, this._session = null, this._savedHeight = "", this._drag = new Z(this, {
+    super(), this.readonly = !1, this._rows = [], this._settings = { connectPoints: !1 }, this._status = "idle", this._error = "", this._saveState = "saved", this._saveError = null, this._view = "closed", this._pos = null, this._session = null, this._savedHeight = "", this._drag = new tt(this, {
       getFrame: () => this.renderRoot && this.renderRoot.querySelector(".frame"),
       getPosition: () => this._pos,
       onMove: (t) => this._pos = t,
       onEnd: (t) => {
-        st(t), this._log("moved", t);
+        nt(t), this._log("moved", t);
       }
     }), this._onPageHide = () => this._flushOnUnload(), this._onVisibility = () => {
       document.visibilityState === "hidden" && this.flush();
@@ -571,7 +592,7 @@ class it extends x {
     return this._view;
   }
   open() {
-    this._view !== "open" && (this._pos || (this._pos = et() || this._defaultPosition()), this._setView("open"));
+    this._view !== "open" && (this._pos || (this._pos = it() || this._defaultPosition()), this._setView("open"));
   }
   close() {
     this._view !== "closed" && (this._setView("closed"), this.flush());
@@ -593,11 +614,14 @@ class it extends x {
   /** Adds rows from plain objects, e.g. data from a simulation. Blank rows already there are replaced. */
   appendRows(t, { source: e = "host" } = {}) {
     if (!this.config || this.readonly || !Array.isArray(t) || t.length === 0) return;
-    const s = Y(this.config, t), o = this._rows.filter((i) => !U(i));
-    this._changeRows(o.concat(s)), this._log("rows_appended", { source: e, count: s.length, rowIds: s.map((i) => i.id) });
+    const s = X(this.config, t), n = this._rows.filter((i) => !G(i));
+    this._changeRows(n.concat(s)), this._log("rows_appended", { source: e, count: s.length, rowIds: s.map((i) => i.id) });
   }
   getRows() {
-    return this.config ? S(this.config, this._rows).rows : [];
+    return this.config ? b(this.config, this._rows).rows : [];
+  }
+  getSettings() {
+    return { ...this._settings };
   }
   /** Sends any waiting save and log events now. */
   async flush() {
@@ -612,17 +636,17 @@ class it extends x {
     const e = this.config;
     if (e) {
       try {
-        K(e);
+        Y(e);
       } catch (s) {
         this._endSession(), this._status = "error", this._error = `This tool is set up wrongly: ${s.message}`;
         return;
       }
       if (this.data) {
-        this._endSession(), this._rows = v(e, this.data), this._status = "ready";
+        this._endSession(), this._rows = v(e, this.data), this._settings = y(e, this.data), this._status = "ready";
         return;
       }
       if (!this.adapter || !this.taskId) {
-        this._endSession(), this._rows = v(e, { rows: this._rows }), this._status = "ready";
+        this._endSession(), this._rows = v(e, { rows: this._rows }), t || (this._settings = y(e, null)), this._status = "ready";
         return;
       }
       if (t && this._session) {
@@ -634,17 +658,17 @@ class it extends x {
   }
   _startSession() {
     const t = this.taskId, e = this.adapter, s = { taskId: t, ready: !1 };
-    s.autosave = j({
-      save: (o, i) => e.save(t, o, i),
-      onState: (o, i) => {
-        this._session === s && (this._saveState = o, this._saveError = i || null, this._fire("savestate", { state: o, error: i }));
+    s.autosave = W({
+      save: (n, i) => e.save(t, n, i),
+      onState: (n, i) => {
+        this._session === s && (this._saveState = n, this._saveError = i || null, this._fire("savestate", { state: n, error: i }));
       }
-    }), s.queue = X({ send: (o, i) => e.log(t, o, i) }), s.queue.start(), this._session = s, this._status = "loading", this._saveState = "saved", Promise.resolve().then(() => e.load(t)).then(
-      (o) => {
-        this._session === s && (this._rows = v(this.config, o), this._status = "ready", s.ready = !0, this._fire("loaded", { taskId: t }));
+    }), s.queue = J({ send: (n, i) => e.log(t, n, i) }), s.queue.start(), this._session = s, this._status = "loading", this._saveState = "saved", Promise.resolve().then(() => e.load(t)).then(
+      (n) => {
+        this._session === s && (this._rows = v(this.config, n), this._settings = y(this.config, n), this._status = "ready", s.ready = !0, this._fire("loaded", { taskId: t }));
       },
-      (o) => {
-        this._session === s && (this._status = "error", this._error = o && o.status === 401 ? "Your login has expired. Log out and log in again to see your data." : "Your saved data could not be loaded.", this._fire("loaderror", { taskId: t, error: o }));
+      (n) => {
+        this._session === s && (this._status = "error", this._error = n && n.status === 401 ? "Your login has expired. Log out and log in again to see your data." : "Your saved data could not be loaded.", this._fire("loaderror", { taskId: t, error: n }));
       }
     );
   }
@@ -668,13 +692,19 @@ class it extends x {
     this.dispatchEvent(new CustomEvent(t, { detail: e, bubbles: !0 }));
   }
   _changeRows(t) {
-    this._rows = t;
-    const e = S(this.config, t);
-    this._fire("datachange", { taskId: this.taskId, rows: e.rows }), this._canPersist() && this._session.autosave.schedule(e);
+    this._rows = t, this._fire("datachange", { taskId: this.taskId, rows: b(this.config, t).rows }), this._scheduleSave();
+  }
+  _scheduleSave() {
+    this._canPersist() && this._session.autosave.schedule(b(this.config, this._rows, this._settings));
+  }
+  // In read-only mode the choice only changes the view; it is not saved or logged
+  _onConnectPoints(t) {
+    const e = t.target.checked;
+    this._settings = { ...this._settings, connectPoints: e }, this._fire("settingschange", { taskId: this.taskId, settings: this.getSettings() }), this._log("connect_points_changed", { value: e }), this._scheduleSave();
   }
   // ---- Window ----
   _defaultPosition() {
-    const t = Math.min(760, window.innerWidth - 32);
+    const t = Math.min(900, window.innerWidth - 32);
     return { x: Math.max(16, window.innerWidth - t - 16), y: 72 };
   }
   _setView(t) {
@@ -684,15 +714,15 @@ class it extends x {
   }
   // ---- Table events ----
   _onCellInput(t) {
-    const { rowId: e, key: s, value: o } = t.detail;
-    this._changeRows(this._rows.map((i) => i.id === e ? { ...i, values: { ...i.values, [s]: o } } : i));
+    const { rowId: e, key: s, value: n } = t.detail;
+    this._changeRows(this._rows.map((i) => i.id === e ? { ...i, values: { ...i.values, [s]: n } } : i));
   }
   _onCellCommit(t) {
-    const { rowId: e, key: s, old: o, value: i } = t.detail;
-    this._log("cell_edited", { rowId: e, key: s, old: o, value: i, valid: T(i) === null });
+    const { rowId: e, key: s, old: n, value: i } = t.detail;
+    this._log("cell_edited", { rowId: e, key: s, old: n, value: i, valid: z(i) === null });
   }
   async _onRowAdd(t) {
-    const e = b(this.config);
+    const e = w(this.config);
     this._changeRows(this._rows.concat(e)), this._log("row_added", { rowId: e.id }), await this.updateComplete;
     const s = this.renderRoot.querySelector("dpt-table");
     s && s.focusCell(e.id, t.detail.focusKey);
@@ -700,8 +730,8 @@ class it extends x {
   _onRowDelete(t) {
     const { rowId: e } = t.detail, s = this._rows.find((i) => i.id === e);
     if (!s) return;
-    const o = this._rows.filter((i) => i.id !== e);
-    this._changeRows(o.length ? o : [b(this.config)]), this._log("row_deleted", { rowId: e, values: s.values });
+    const n = this._rows.filter((i) => i.id !== e);
+    this._changeRows(n.length ? n : [w(this.config)]), this._log("row_deleted", { rowId: e, values: s.values });
   }
   // ---- Rendering ----
   _saveText() {
@@ -717,7 +747,7 @@ class it extends x {
     if (this._status !== "ready") return f;
     const t = this.config, e = {};
     t.columns.forEach((i) => e[i.key] = i);
-    const s = G(t, this._rows), o = t.plot.yLabel || (s.length === 1 ? s[0].label : "");
+    const s = j(t, this._rows), n = t.plot.yLabel || (s.length === 1 ? s[0].label : "");
     return c`
       <div class="panes">
         <dpt-table
@@ -729,12 +759,18 @@ class it extends x {
           @row-add=${this._onRowAdd}
           @row-delete=${this._onRowDelete}
         ></dpt-table>
-        <dpt-plot
-          .series=${s}
-          .xLabel=${z(e[t.plot.x])}
-          .yLabel=${o}
-          ?line=${!!t.plot.line}
-        ></dpt-plot>
+        <div class="plot-pane">
+          <label class="connect">
+            <input type="checkbox" .checked=${this._settings.connectPoints} @change=${this._onConnectPoints} />
+            Connect points
+          </label>
+          <dpt-plot
+            .series=${s}
+            .xLabel=${M(e[t.plot.x])}
+            .yLabel=${n}
+            ?line=${this._settings.connectPoints}
+          ></dpt-plot>
+        </div>
       </div>
     `;
   }
@@ -746,7 +782,7 @@ class it extends x {
         class="frame ${t ? "collapsed" : ""}"
         role="dialog"
         aria-label=${e}
-        style=${N({ left: `${s.x}px`, top: `${s.y}px` })}
+        style=${q({ left: `${s.x}px`, top: `${s.y}px`, maxHeight: `calc(100vh - ${s.y + 16}px)` })}
       >
         <header class="bar" @pointerdown=${this._drag.start}>
           <span class="grip" aria-hidden="true">
@@ -777,7 +813,7 @@ class it extends x {
     `;
   }
   static get styles() {
-    return $`
+    return E`
       :host {
         --dpt-surface: #ffffff;
         --dpt-header-bg: #f4f4f1;
@@ -795,12 +831,12 @@ class it extends x {
         box-sizing: border-box;
         display: flex;
         flex-direction: column;
-        width: min(760px, calc(100vw - 32px));
-        height: min(440px, calc(100vh - 96px));
+        /* Grows with the table, up to the bottom of the screen (max-height is set from the position) */
+        width: min(900px, calc(100vw - 32px));
+        height: auto;
         min-width: 320px;
         min-height: 220px;
         max-width: 100vw;
-        max-height: 100vh;
         resize: both;
         overflow: hidden;
         background: var(--dpt-surface);
@@ -883,18 +919,47 @@ class it extends x {
         display: flex;
         flex-direction: column;
       }
+      /* The table takes the width its columns need (up to 65%); the plot gets the rest */
       .panes {
         flex: 1;
         min-height: 0;
         display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+        grid-template-columns: fit-content(65%) minmax(280px, 1fr);
+        grid-template-rows: minmax(0, 1fr);
         gap: 12px;
       }
-      @container (max-width: 560px) {
+      @container (max-width: 640px) {
         .panes {
           grid-template-columns: minmax(0, 1fr);
-          grid-template-rows: minmax(120px, 1fr) minmax(200px, 1fr);
+          grid-template-rows: minmax(0, auto) minmax(260px, 1fr);
         }
+      }
+      .plot-pane {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 0;
+        min-height: 0;
+      }
+      .connect {
+        align-self: flex-end;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        color: var(--dpt-text);
+        cursor: pointer;
+        user-select: none;
+      }
+      .connect input {
+        width: 16px;
+        height: 16px;
+        margin: 0;
+        accent-color: var(--dpt-accent);
+        cursor: pointer;
+      }
+      dpt-plot {
+        flex: 1;
       }
       .note {
         margin: auto;
@@ -921,13 +986,13 @@ class it extends x {
     `;
   }
 }
-k("data-plot-tool", it);
-function dt({ baseURL: r, getToken: t, prefix: e = "/app/api", fetch: s }) {
-  const o = String(r).replace(/\/+$/, "") + e, i = s || ((...a) => globalThis.fetch(...a)), n = encodeURIComponent;
+S("data-plot-tool", ot);
+function ht({ baseURL: o, getToken: t, prefix: e = "/app/api", fetch: s }) {
+  const n = String(o).replace(/\/+$/, "") + e, i = s || ((...a) => globalThis.fetch(...a)), r = encodeURIComponent;
   async function l(a, d, h, { keepalive: u = !1 } = {}) {
     const m = { Accept: "application/json" }, g = t && t();
     g && (m.Authorization = `Bearer ${g}`), h !== void 0 && (m["Content-Type"] = "application/json");
-    const p = await i(o + d, {
+    const p = await i(n + d, {
       method: a,
       headers: m,
       keepalive: u,
@@ -935,15 +1000,15 @@ function dt({ baseURL: r, getToken: t, prefix: e = "/app/api", fetch: s }) {
     });
     if (p.status === 404 && a === "GET") return null;
     if (!p.ok) {
-      const E = new Error(`${a} ${d} failed with ${p.status}`);
-      throw E.status = p.status, E;
+      const C = new Error(`${a} ${d} failed with ${p.status}`);
+      throw C.status = p.status, C;
     }
     return p.status === 204 ? null : p.json();
   }
   return {
-    load: (a) => l("GET", `/datatables/${n(a)}`),
-    save: (a, d, h) => l("PUT", `/datatables/${n(a)}`, d, h),
-    log: (a, d, h) => l("POST", `/datatables/${n(a)}/events`, { events: d }, h),
+    load: (a) => l("GET", `/datatables/${r(a)}`),
+    save: (a, d, h) => l("PUT", `/datatables/${r(a)}`, d, h),
+    log: (a, d, h) => l("POST", `/datatables/${r(a)}/events`, { events: d }, h),
     // Admin accounts only
     adminList: ({ taskId: a, username: d } = {}) => {
       const h = new URLSearchParams();
@@ -951,13 +1016,13 @@ function dt({ baseURL: r, getToken: t, prefix: e = "/app/api", fetch: s }) {
       const u = h.toString();
       return l("GET", `/admin/datatables${u ? `?${u}` : ""}`);
     },
-    adminGet: (a, d) => l("GET", `/admin/datatables/${n(a)}/${n(d)}`)
+    adminGet: (a, d) => l("GET", `/admin/datatables/${r(a)}/${r(d)}`)
   };
 }
 export {
-  it as DataPlotTool,
-  K as checkConfig,
-  dt as createHttpAdapter,
-  y as parseNumber,
-  G as plotSeries
+  ot as DataPlotTool,
+  Y as checkConfig,
+  ht as createHttpAdapter,
+  k as parseNumber,
+  j as plotSeries
 };

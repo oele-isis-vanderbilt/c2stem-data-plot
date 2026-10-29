@@ -81,7 +81,7 @@ export class DataTable extends LitElement {
             <tr>
               <th class="num" scope="col"><span class="sr">Row</span></th>
               ${columns.map(
-                (c) => html`<th scope="col">${c.label}${c.unit ? html` <span class="unit">(${c.unit})</span>` : nothing}</th>`
+                (c) => html`<th scope="col">${c.label}${c.unit ? html`<span class="unit">(${c.unit})</span>` : nothing}</th>`
               )}
               ${readonly ? nothing : html`<th class="act" scope="col"><span class="sr">Delete</span></th>`}
             </tr>
@@ -156,7 +156,7 @@ export class DataTable extends LitElement {
       }
       table {
         border-collapse: collapse;
-        width: 100%;
+        min-width: 100%;
         font-size: 14px;
       }
       thead th {
@@ -168,11 +168,15 @@ export class DataTable extends LitElement {
         font-weight: 600;
         padding: 6px 8px;
         border-bottom: 1px solid var(--dpt-border);
-        white-space: nowrap;
+        vertical-align: bottom;
+        line-height: 1.25;
       }
+      /* Units on their own line keep the columns narrow */
       .unit {
+        display: block;
         font-weight: 400;
         color: var(--dpt-muted);
+        white-space: nowrap;
       }
       td,
       tbody th {
@@ -190,7 +194,7 @@ export class DataTable extends LitElement {
       input {
         box-sizing: border-box;
         width: 100%;
-        min-width: 5em;
+        min-width: 4.5em;
         border: 1px solid transparent;
         background: transparent;
         padding: 6px 8px;

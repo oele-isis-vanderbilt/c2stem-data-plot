@@ -8,6 +8,7 @@ import {
   cellError,
   plotSeries,
   rowsFromObjects,
+  settingsFromDoc,
   toDoc,
 } from "../src/tableModel.js";
 
@@ -88,6 +89,23 @@ describe("saving and loading", () => {
   it("matches saved cells by key when columns change", () => {
     const doc = { rows: [{ id: "a", values: { mass: 2, old: "7" } }] };
     expect(fromDoc(config, doc)).toEqual([{ id: "a", values: { mass: "2", v: "", ke: "" } }]);
+  });
+
+  it("saves the connect-points setting, defaulting to the config's line option", () => {
+    const rows = [row({ mass: "1", v: "2", ke: "" })];
+    expect(toDoc(config, rows).settings).toEqual({ connectPoints: false });
+    expect(toDoc(config, rows, { connectPoints: true }).settings).toEqual({ connectPoints: true });
+    const lineConfig = { ...config, plot: { ...config.plot, line: true } };
+    expect(toDoc(lineConfig, rows).settings).toEqual({ connectPoints: true });
+  });
+
+  it("reads settings back, and gives old saves the config's default", () => {
+    expect(settingsFromDoc(config, { rows: [], settings: { connectPoints: true } })).toEqual({ connectPoints: true });
+    expect(settingsFromDoc(config, { rows: [] })).toEqual({ connectPoints: false });
+    expect(settingsFromDoc(config, null)).toEqual({ connectPoints: false });
+    const lineConfig = { ...config, plot: { ...config.plot, line: true } };
+    expect(settingsFromDoc(lineConfig, { rows: [] })).toEqual({ connectPoints: true });
+    expect(settingsFromDoc(lineConfig, { settings: { connectPoints: false } })).toEqual({ connectPoints: false });
   });
 
   it("gives one blank row when nothing is saved", () => {

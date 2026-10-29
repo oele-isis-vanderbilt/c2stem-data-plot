@@ -8,6 +8,7 @@ import {
   isRowEmpty,
   plotSeries,
   rowsFromObjects,
+  settingsFromDoc,
   toDoc,
   cellError,
 } from "./tableModel.js";
@@ -47,9 +48,13 @@ function writePosition(pos) {
  *   data      a saved doc to show instead of loading (e.g. an admin viewing a student's table)
  *   readonly  no editing, saving or logging
  *
- * Methods: open(), close(), collapse(), expand(), toggle(), appendRows(objects, { source }), getRows(), flush()
- * Events:  datachange { taskId, rows }, viewchange { view }, savestate { state, error }, loaded { taskId },
- *          loaderror { taskId, error }
+ * Methods: open(), close(), collapse(), expand(), toggle(), appendRows(objects, { source }), getRows(),
+ *          getSettings(), flush()
+ * Events:  datachange { taskId, rows }, settingschange { taskId, settings }, viewchange { view },
+ *          savestate { state, error }, loaded { taskId }, loaderror { taskId, error }
+ *
+ * The student's "Connect points" choice is saved with the table (doc.settings.connectPoints); config.plot.line
+ * is its default.
  */
 export class DataPlotTool extends LitElement {
   static get properties() {
@@ -60,6 +65,7 @@ export class DataPlotTool extends LitElement {
       data: { attribute: false },
       readonly: { type: Boolean, reflect: true },
       _rows: { state: true },
+      _settings: { state: true },
       _status: { state: true },
       _error: { state: true },
       _saveState: { state: true },
@@ -72,6 +78,7 @@ export class DataPlotTool extends LitElement {
     super();
     this.readonly = false;
     this._rows = [];
+    this._settings = { connectPoints: false };
     this._status = "idle"; // idle | loading | ready | error
     this._error = "";
     this._saveState = "saved";
@@ -168,6 +175,10 @@ export class DataPlotTool extends LitElement {
     return this.config ? toDoc(this.config, this._rows).rows : [];
   }
 
+  getSettings() {
+    return { ...this._settings };
+  }
+
   /** Sends any waiting save and log events now. */
   async flush() {
     const session = this._session;
@@ -197,6 +208,7 @@ export class DataPlotTool extends LitElement {
     if (this.data) {
       this._endSession();
       this._rows = fromDoc(config, this.data);
+      this._settings = settingsFromDoc(config, this.data);
       this._status = "ready";
       return;
     }
@@ -204,6 +216,7 @@ export class DataPlotTool extends LitElement {
       // No saving: the table still works, and keeps what was typed
       this._endSession();
       this._rows = fromDoc(config, { rows: this._rows });
+      if (!configOnly) this._settings = settingsFromDoc(config, null);
       this._status = "ready";
       return;
     }
@@ -240,6 +253,7 @@ export class DataPlotTool extends LitElement {
         (doc) => {
           if (this._session !== session) return;
           this._rows = fromDoc(this.config, doc);
+          this._settings = settingsFromDoc(this.config, doc);
           this._status = "ready";
           session.ready = true;
           this._fire("loaded", { taskId });
@@ -291,15 +305,27 @@ export class DataPlotTool extends LitElement {
 
   _changeRows(rows) {
     this._rows = rows;
-    const doc = toDoc(this.config, rows);
-    this._fire("datachange", { taskId: this.taskId, rows: doc.rows });
-    if (this._canPersist()) this._session.autosave.schedule(doc);
+    this._fire("datachange", { taskId: this.taskId, rows: toDoc(this.config, rows).rows });
+    this._scheduleSave();
+  }
+
+  _scheduleSave() {
+    if (this._canPersist()) this._session.autosave.schedule(toDoc(this.config, this._rows, this._settings));
+  }
+
+  // In read-only mode the choice only changes the view; it is not saved or logged
+  _onConnectPoints(e) {
+    const connectPoints = e.target.checked;
+    this._settings = { ...this._settings, connectPoints };
+    this._fire("settingschange", { taskId: this.taskId, settings: this.getSettings() });
+    this._log("connect_points_changed", { value: connectPoints });
+    this._scheduleSave();
   }
 
   // ---- Window ----
 
   _defaultPosition() {
-    const width = Math.min(760, window.innerWidth - 32);
+    const width = Math.min(900, window.innerWidth - 32);
     return { x: Math.max(16, window.innerWidth - width - 16), y: 72 };
   }
 
@@ -379,12 +405,18 @@ export class DataPlotTool extends LitElement {
           @row-add=${this._onRowAdd}
           @row-delete=${this._onRowDelete}
         ></dpt-table>
-        <dpt-plot
-          .series=${series}
-          .xLabel=${columnLabel(byKey[config.plot.x])}
-          .yLabel=${yLabel}
-          ?line=${Boolean(config.plot.line)}
-        ></dpt-plot>
+        <div class="plot-pane">
+          <label class="connect">
+            <input type="checkbox" .checked=${this._settings.connectPoints} @change=${this._onConnectPoints} />
+            Connect points
+          </label>
+          <dpt-plot
+            .series=${series}
+            .xLabel=${columnLabel(byKey[config.plot.x])}
+            .yLabel=${yLabel}
+            ?line=${this._settings.connectPoints}
+          ></dpt-plot>
+        </div>
       </div>
     `;
   }
@@ -399,7 +431,7 @@ export class DataPlotTool extends LitElement {
         class="frame ${collapsed ? "collapsed" : ""}"
         role="dialog"
         aria-label=${title}
-        style=${styleMap({ left: `${pos.x}px`, top: `${pos.y}px` })}
+        style=${styleMap({ left: `${pos.x}px`, top: `${pos.y}px`, maxHeight: `calc(100vh - ${pos.y + 16}px)` })}
       >
         <header class="bar" @pointerdown=${this._drag.start}>
           <span class="grip" aria-hidden="true">
@@ -451,12 +483,12 @@ export class DataPlotTool extends LitElement {
         box-sizing: border-box;
         display: flex;
         flex-direction: column;
-        width: min(760px, calc(100vw - 32px));
-        height: min(440px, calc(100vh - 96px));
+        /* Grows with the table, up to the bottom of the screen (max-height is set from the position) */
+        width: min(900px, calc(100vw - 32px));
+        height: auto;
         min-width: 320px;
         min-height: 220px;
         max-width: 100vw;
-        max-height: 100vh;
         resize: both;
         overflow: hidden;
         background: var(--dpt-surface);
@@ -539,18 +571,47 @@ export class DataPlotTool extends LitElement {
         display: flex;
         flex-direction: column;
       }
+      /* The table takes the width its columns need (up to 65%); the plot gets the rest */
       .panes {
         flex: 1;
         min-height: 0;
         display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+        grid-template-columns: fit-content(65%) minmax(280px, 1fr);
+        grid-template-rows: minmax(0, 1fr);
         gap: 12px;
       }
-      @container (max-width: 560px) {
+      @container (max-width: 640px) {
         .panes {
           grid-template-columns: minmax(0, 1fr);
-          grid-template-rows: minmax(120px, 1fr) minmax(200px, 1fr);
+          grid-template-rows: minmax(0, auto) minmax(260px, 1fr);
         }
+      }
+      .plot-pane {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 0;
+        min-height: 0;
+      }
+      .connect {
+        align-self: flex-end;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        color: var(--dpt-text);
+        cursor: pointer;
+        user-select: none;
+      }
+      .connect input {
+        width: 16px;
+        height: 16px;
+        margin: 0;
+        accent-color: var(--dpt-accent);
+        cursor: pointer;
+      }
+      dpt-plot {
+        flex: 1;
       }
       .note {
         margin: auto;
