@@ -1,0 +1,29 @@
+{
+  "name": "@c2stem/data-plot",
+  "version": "0.1.0",
+  "description": "A floating data table that plots what students enter. Framework-agnostic web component.",
+  "type": "module",
+  "main": "./dist/data-plot.js",
+  "module": "./dist/data-plot.js",
+  "exports": {
+    ".": "./dist/data-plot.js"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "dev": "vite --open /demo/",
+    "build": "vite build",
+    "test": "vitest run",
+    "prepare": "vite build"
+  },
+  "dependencies": {
+    "chart.js": "^4.4.0",
+    "lit": "^3.2.0"
+  },
+  "devDependencies": {
+    "vite": "^5.4.0",
+    "vitest": "^2.1.0"
+  }
+}
